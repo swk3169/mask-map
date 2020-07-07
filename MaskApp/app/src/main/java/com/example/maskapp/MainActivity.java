@@ -3,8 +3,14 @@ package com.example.maskapp;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 import com.naver.maps.geometry.LatLng;
 import com.naver.maps.map.MapFragment;
@@ -26,7 +32,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, Overlay.OnClickListener, NaverMap.OnCameraChangeListener, NaverMap.OnCameraIdleListener {
+public class MainActivity extends AppCompatActivity implements NaverMap.OnMapClickListener, OnMapReadyCallback, Overlay.OnClickListener, NaverMap.OnCameraChangeListener, NaverMap.OnCameraIdleListener {
     private static final int ACCESS_LOCATION_PERMISSION_REQUEST_CODE = 100;
 
     private FusedLocationSource locationSource;
@@ -45,6 +51,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+
+        return true;
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.show_list:
+                Intent intent = new Intent(this, StoreActivity.class);
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onMapReady(@NonNull NaverMap naverMap) {
         this.naverMap = naverMap;
 
@@ -53,11 +79,40 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         UiSettings uiSettings = naverMap.getUiSettings();
         uiSettings.setLocationButtonEnabled(true);
 
-        naverMap.addOnCameraChangeListener((NaverMap.OnCameraChangeListener) this);
-        naverMap.addOnCameraIdleListener((NaverMap.OnCameraIdleListener) this);
+        naverMap.addOnCameraChangeListener(this);
+        naverMap.addOnCameraIdleListener(this);
 
         LatLng mapCenter = naverMap.getCameraPosition().target;
         fetchStoreSale(mapCenter.latitude, mapCenter.longitude, 5000);
+
+        infoWindow = new InfoWindow();
+        infoWindow.setAdapter(new InfoWindow.DefaultViewAdapter(this) {
+
+            @NonNull
+            @Override
+            protected View getContentView(@NonNull InfoWindow infoWindow) {
+                Marker marker = infoWindow.getMarker();
+                Store store = (Store) marker.getTag();
+                View view = View.inflate(MainActivity.this, R.layout.view_info_window, null);
+                ((TextView) view.findViewById(R.id.name)).setText(store.name);
+                if ("plenty".equalsIgnoreCase(store.remain_stat)) {
+                    ((TextView) view.findViewById(R.id.stock)).setText("100개 이상");
+                } else if ("some".equalsIgnoreCase(store.remain_stat)) {
+                    ((TextView) view.findViewById(R.id.stock)).setText("30개 이상 100개 미만");
+                } else if ("few".equalsIgnoreCase(store.remain_stat)) {
+                    ((TextView) view.findViewById(R.id.stock)).setText("2개 이상 30개 미만");
+                } else if ("empty".equalsIgnoreCase(store.remain_stat)) {
+                    ((TextView) view.findViewById(R.id.stock)).setText("1개 이하");
+                } else if ("break".equalsIgnoreCase(store.remain_stat)) {
+                    ((TextView) view.findViewById(R.id.stock)).setText("판매중지");
+                } else {
+                    ((TextView) view.findViewById(R.id.stock)).setText(null);
+                }
+                ((TextView) view.findViewById(R.id.time)).setText("입고 " + store.stock_at);
+                return view;
+            }
+        });
+
     }
 
     @Override
@@ -102,14 +157,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     marker.setIcon(OverlayImage.fromResource(R.drawable.marker_green));
                 } else if ("some".equalsIgnoreCase(store.remain_stat)) {
                     marker.setIcon(OverlayImage.fromResource(R.drawable.marker_yellow));
-                } else if ("fiew".equalsIgnoreCase(store.remain_stat)) {
+                } else if ("few".equalsIgnoreCase(store.remain_stat)) {
                     marker.setIcon(OverlayImage.fromResource(R.drawable.marker_red));
                 } else {
                     marker.setIcon(OverlayImage.fromResource(R.drawable.marker_gray));
                 }
                 marker.setAnchor(new PointF(0.5f, 1.0f));
                 marker.setMap(naverMap);
-//                marker.setOnClickListener(this);
+                marker.setOnClickListener(this);
                 markerList.add(marker);
             }
         }
@@ -148,6 +203,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (isCameraAnimated) {
             LatLng mapCenter = naverMap.getCameraPosition().target;
             fetchStoreSale(mapCenter.latitude, mapCenter.longitude, 5000);
+        }
+    }
+
+    @Override
+    public void onMapClick(@NonNull PointF pointF, @NonNull LatLng latLng) {
+        if (infoWindow.getMarker() != null) {
+            infoWindow.close();
         }
     }
 }
