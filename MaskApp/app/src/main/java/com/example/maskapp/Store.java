@@ -3,15 +3,15 @@ package com.example.maskapp;
 import java.util.Comparator;
 
 public class Store implements Comparable<Store> {
-    public String addr;
-    public String code;
-    public String created_at;
-    public double lat;
-    public double lng;
-    public String name;
-    public String remain_stat;
-    public String stock_at;
-    public String type;
+    public String addr; // 주소
+    public String code; // 식별 코드
+    public String created_at;   // 데이터 생성 일자($YYYY/MM/DD HH:mm:ss)
+    public double lat;  // 위도
+    public double lng;  // 경도
+    public String name; // 이름
+    public String remain_stat;  // 재고 상태[100개 이상(녹색): 'plenty' / 30개 이상 100개미만(노랑색): 'some' / 2개 이상 30개 미만(빨강색): 'few' / 1개 이하(회색): 'empty' / 판매중지: 'break']
+    public String stock_at; // 입고시간($YYYY/MM/DD HH:mm:ss)
+    public String type; // 판매처 유형[약국: '01', 우체국: '02', 농협: '03' ]
 
     public int getAmount() {
         if ("plenty".equalsIgnoreCase(remain_stat)) {

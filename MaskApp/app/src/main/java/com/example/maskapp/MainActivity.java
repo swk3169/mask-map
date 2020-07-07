@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements NaverMap.OnMapCli
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        // 네이버맵 Async로 호출
         MapFragment mapFragment = (MapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
     }
@@ -73,19 +73,21 @@ public class MainActivity extends AppCompatActivity implements NaverMap.OnMapCli
     @Override
     public void onMapReady(@NonNull NaverMap naverMap) {
         this.naverMap = naverMap;
-
+        // 현재위치
         locationSource = new FusedLocationSource(this, ACCESS_LOCATION_PERMISSION_REQUEST_CODE);
         naverMap.setLocationSource(locationSource);
+        // 현재위치 렌더링 UI
         UiSettings uiSettings = naverMap.getUiSettings();
         uiSettings.setLocationButtonEnabled(true);
-
+        // 맵 위치 변경 시 리스너
         naverMap.addOnCameraChangeListener(this);
         naverMap.addOnCameraIdleListener(this);
-
+        // 맵 중앙위치
         LatLng mapCenter = naverMap.getCameraPosition().target;
         fetchStoreSale(mapCenter.latitude, mapCenter.longitude, 5000);
 
         infoWindow = new InfoWindow();
+        // 인포윈도우 어댑터
         infoWindow.setAdapter(new InfoWindow.DefaultViewAdapter(this) {
 
             @NonNull
@@ -114,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements NaverMap.OnMapCli
         });
 
     }
-
+    // 개인정보 위치 허가여부
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -125,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements NaverMap.OnMapCli
                 return;
         }
     }
-
+    // 마스크 판매장소 API의 데이터 가져오기
     private void fetchStoreSale(double lat, double lng, int m) {
         Retrofit retrofit = new Retrofit.Builder().baseUrl("https://8oi9s0nnth.apigw.ntruss.com").addConverterFactory(GsonConverterFactory.create()).build();
         MaskApi maskApi = retrofit.create(MaskApi.class);
@@ -145,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements NaverMap.OnMapCli
             }
         });
     }
-
+    // API에서 가져온 가게 좌표마다 marker 띄움
     private void updateMapMarkers(StoreSaleResult result) {
         resetMarkerList();
         if (result.stores != null && result.stores.size() > 0) {
@@ -169,7 +171,7 @@ public class MainActivity extends AppCompatActivity implements NaverMap.OnMapCli
             }
         }
     }
-
+    // 마커리스트 지우고 리셋
     private void resetMarkerList() {
         if (markerList != null && markerList.size() > 0) {
             for (Marker marker : markerList) {
@@ -178,7 +180,7 @@ public class MainActivity extends AppCompatActivity implements NaverMap.OnMapCli
             markerList.clear();
         }
     }
-
+    // 클릭 시 마커 띄우기
     @Override
     public boolean onClick(@NonNull Overlay overlay) {
         if (overlay instanceof Marker) {
@@ -192,12 +194,12 @@ public class MainActivity extends AppCompatActivity implements NaverMap.OnMapCli
         }
         return false;
     }
-
+    // 지도가 이동 시에 이동 중임을 확인
     @Override
     public void onCameraChange(int reason, boolean animated) {
         isCameraAnimated = animated;
     }
-
+    // 지도가 멈춘 위치의 좌표 API로 URL 포스트
     @Override
     public void onCameraIdle() {
         if (isCameraAnimated) {
@@ -205,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements NaverMap.OnMapCli
             fetchStoreSale(mapCenter.latitude, mapCenter.longitude, 5000);
         }
     }
-
+    // 마커 클릭 시 사라짐
     @Override
     public void onMapClick(@NonNull PointF pointF, @NonNull LatLng latLng) {
         if (infoWindow.getMarker() != null) {
